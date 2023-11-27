@@ -2,7 +2,9 @@ set(base_SRCS
   Thread.cpp
   CurrentThread.cpp
   Logging.cpp
+  LogStream.cpp
   Timestamp.cpp
+  TimeZone.cpp
   )
 
 add_library(skyline_base ${base_SRCS})

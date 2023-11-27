@@ -23,6 +23,7 @@ set(CXX_FLAGS
   -D_FILE_OFFSET_BITS=64 # customer
   -Wall # warning
   -Wextra # extention warning
+  -Werror # convert warning to error
   -Wconversion # Warnings can change the implicit conversion of values
   -Wno-ununsed-paramter
   -Wold-style-cast
@@ -38,7 +39,14 @@ set(CXX_FLAGS
 if(CMAKE_BUILD_BITS EQUAL 32)
   list(APPEND CXX_FLAGS "-m32")
 endif()
-
+if(CMAKE_BUILD_COMPILER_ID STREQUAL "Clang")
+  message("CMAKE_BUILD_COMILER_ID Clang")
+  list(APPEND CXX_FLAGS "-Wno-null-dereferenct")
+  list(APPEND CXX_FLAGS "-Wno-sign-conversion")
+  list(APPEND CXX_FLAGS "-Wno-unused-local-typedef")
+  list(APPEND CXX_FLAGS "-Wthread-safety")
+  list(REMOVE_ITEM CXX_FLAGS "-rdynamic")
+endif()
 # message(${CXX_FLAGS}) without ";" split
 # message("${CXX_FLAGS}") with ";" split
 # replace all ";" to " " in CXX_FLAGS and write result into CMAKE_CXX_FLAGS
@@ -50,7 +58,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG") # NDEBUG customer
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-message("project source dir", ${PROJECT_SOURCE_DIR})
+message("project source dir" ${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR})
 
 # toupper and save into BUILD_TYPE

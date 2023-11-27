@@ -23,6 +23,16 @@ namespace CurrentThread
     }
     return t_cachedTid;
   }
+
+  inline const char* tidString() // for logging
+  {
+    return t_tidString;
+  }
+
+  inline int tidStringLength() // for logging
+  {
+    return t_tidStringLength;
+  }
 } // namespace CurrentThread
 
 } // namespace skyline
