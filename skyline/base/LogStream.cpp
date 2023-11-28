@@ -73,6 +73,9 @@ size_t convertHex(char buf[], uintptr_t value)
   return p - buf;
 }
 
+template class FixedBuffer<kSmallBuffer>;
+template class FixedBuffer<kLargeBuffer>;
+
 } // namespace detail
 
 } // namespace skyline

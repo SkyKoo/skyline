@@ -1,0 +1,2 @@
+add_executable(logging_test Logging_test.cpp)
+target_link_libraries(logging_test skyline_base)

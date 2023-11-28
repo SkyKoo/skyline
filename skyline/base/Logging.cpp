@@ -4,6 +4,7 @@
 #include "skyline/base/CurrentThread.h"
 
 #include <assert.h>
+#include <iostream>
 
 namespace skyline
 {
@@ -36,8 +37,8 @@ const char* LogLevelName[Logger::NUM_LOG_LEVELS] =
 {
   "TRACE ",
   "DEBUG ",
-  "INFO ",
-  "WARN ",
+  "INFO  ", // must 6 chars, see Logger::Impl::Impl
+  "WARN  ", // must 6 chars, see Logger::Impl::Impl
   "ERROR ",
   "FATAL ",
 };
@@ -129,6 +130,7 @@ void Logger::Impl::formatTime()
         dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second);
     assert(len == 17); (void)len;
   }
+  // So if we want to change the TimeZone, it can only take effect after 1 second
 
   // The mean of the global timezone is setted or not.
   if (g_logTimeZone.valid())
@@ -139,7 +141,7 @@ void Logger::Impl::formatTime()
   }
   else
   {
-    Fmt us(".%06dZ", microseconds);
+    Fmt us(".%06dZ ", microseconds);
     assert(us.length() == 9);
     stream_ << T(t_time, 17) << T(us.data(), 9);
   }

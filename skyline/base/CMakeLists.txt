@@ -5,6 +5,7 @@ set(base_SRCS
   LogStream.cpp
   Timestamp.cpp
   TimeZone.cpp
+  Date.cpp
   )
 
 add_library(skyline_base ${base_SRCS})
@@ -14,3 +15,7 @@ install(TARGETS skyline_base DESTINATION lib)
 
 file(GLOB HEADERS "*.h")
 install(FILES ${HEADERS} DESTINATION include/skyline/base)
+
+if (SKYLINE_BUILD_EXAMPLES)
+  add_subdirectory(tests)
+endif()
