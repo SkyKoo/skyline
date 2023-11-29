@@ -6,6 +6,8 @@ set(base_SRCS
   Timestamp.cpp
   TimeZone.cpp
   Date.cpp
+  Condition.cpp
+  CountDownLatch.cpp
   )
 
 add_library(skyline_base ${base_SRCS})

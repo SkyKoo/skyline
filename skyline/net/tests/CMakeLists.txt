@@ -1,0 +1,2 @@
+add_executable(eventloop_unittest EventLoop_unittest.cpp)
+target_link_libraries(eventloop_unittest skyline_net)

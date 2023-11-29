@@ -9,11 +9,13 @@ FILE* g_file;
 
 void dummyOutput(const char* msg, int len)
 {
+  (void)msg;(void)len;
 }
 
 void bench(const char* type)
 {
   // skyline::Logger::setOutput(dummyOutput);
+  (void)type;
 }
 
 int main()

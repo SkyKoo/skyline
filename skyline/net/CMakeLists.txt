@@ -1,5 +1,6 @@
 set(net_SRCS
   EventLoop.cpp
+  Channel.cpp
   )
 
 add_library(skyline_net ${net_SRCS})
@@ -9,3 +10,7 @@ install(TARGETS skyline_net DESTINATION lib)
 
 file(GLOB HEADERS "*.h")
 install(FILES ${HEADERS} DESTINATION include/skyline/net)
+
+if(SKYLINE_BUILD_EXAMPLES)
+  add_subdirectory(tests)
+endif()

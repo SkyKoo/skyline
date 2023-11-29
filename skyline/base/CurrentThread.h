@@ -1,6 +1,8 @@
 #ifndef SKYLINE_BASE_CURRENTTHREAD_H
 #define SKYLINE_BASE_CURRENTTHREAD_H
 
+#include "skyline/base/Types.h"
+
 namespace skyline
 {
 
@@ -33,6 +35,17 @@ namespace CurrentThread
   {
     return t_tidStringLength;
   }
+
+  inline const char* name()
+  {
+    return t_threadName;
+  }
+
+  bool isMainThread();
+
+  void sleepUsec(int64_t usec); // for testing
+
+  string stackTrace(bool demangle);
 } // namespace CurrentThread
 
 } // namespace skyline
