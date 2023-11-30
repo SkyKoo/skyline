@@ -31,5 +31,4 @@ int main()
   thread.start();
 
   loop.loop();
-  sleep(2);
 }

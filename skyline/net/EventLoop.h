@@ -3,14 +3,24 @@
 
 #include <atomic>
 #include <functional>
+#include <vector>
+#include <memory>
+
+#include <boost/any.hpp>
 
 #include "skyline/base/noncopyable.h"
 #include "skyline/base/CurrentThread.h"
+#include "skyline/base/Timestamp.h"
+#include "skyline/base/Mutex.h"
 
 namespace skyline
 {
 namespace net
 {
+
+class Channel;
+class Poller;
+// class TimerQueue;
 
 ///
 /// Reactor, at most one per thread.
@@ -40,7 +50,13 @@ class EventLoop : noncopyable
   ///
   /// Time when poll returns, usually means data arrival.
   ///
-  // Timestame pollReturnTime() const { return pollReturnTime_; }
+  Timestamp pollReturnTime() const { return pollReturnTime_; }
+
+  // internal usage
+  void wakeup();
+  void updateChannel(Channel* channel); // call from Channel.h
+  void removeChannel(Channel* channel);
+  bool hasChannel(Channel* channel);
 
   // pid_t threadId() const { return threadId_; }
   void assertInLoopThread()
@@ -56,10 +72,36 @@ class EventLoop : noncopyable
 
  private:
   void abortNotInLoopThread();
+  void handleRead(); // waked up
+  // void doPendingFunctors();
+
+  void printActiveChannels() const; // DEBUG
+
+  typedef std::vector<Channel*> ChannelList;
 
   bool looping_; /* atomic */
   std::atomic<bool> quit_;
+  bool eventHandling_; /* atomic */
+  bool callingPendingFunctors_; /* atomic */
+  int64_t iteration_;
   const pid_t threadId_;
+
+  Timestamp pollReturnTime_;
+  std::unique_ptr<Poller> poller_;
+  // std::unique_ptr<TimerQueue> timerQueue_;
+
+  int wakeupFd_;
+  // unlike in TimerQueue, which is an internal class,
+  // we don't expose Channel to client.
+  std::unique_ptr<Channel> wakeupChannel_;
+  boost::any context_;
+
+  // scratch variables
+  ChannelList activeChannels_;
+  Channel* currentActiveChannel_;
+
+  mutable MutexLock mutex_;
+  std::vector<Functor> pendingFunctors_ GUARDED_BY(mutex_);
 };
 
 } // namespace net
