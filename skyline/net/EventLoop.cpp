@@ -2,6 +2,8 @@
 #include "skyline/net/EventLoop.h"
 #include "skyline/net/Poller.h"
 #include "skyline/net/Channel.h"
+#include "skyline/net/TimerQueue.h"
+#include "skyline/net/SocketsOps.h"
 
 #include "skyline/base/Logging.h"
 
@@ -45,7 +47,7 @@ EventLoop::EventLoop()
     iteration_(0),
     threadId_(CurrentThread::tid()),
     poller_(Poller::newDefaultPoller(this)),
-    // timerQueue_(new TimerQueue(this)),
+    timerQueue_(new TimerQueue(this)),
     wakeupFd_(createEventfd()),
     wakeupChannel_(new Channel(this, wakeupFd_)),
     currentActiveChannel_(NULL)
@@ -75,7 +77,8 @@ EventLoop::~EventLoop()
 
   wakeupChannel_->disableAll();
   wakeupChannel_->remove();
-  ::close(wakeupFd_);
+  // ::close(wakeupFd_);
+  sockets::close(wakeupFd_);
   t_loopInThisThread = NULL;
 }
 
@@ -93,7 +96,7 @@ void EventLoop::loop()
     ++iteration_;
     if (Logger::logLevel() <= Logger::TRACE)
     {
-      // printActiveChannels();
+      printActiveChannels();
     }
     eventHandling_ = true;
     for (Channel* channel : activeChannels_)
@@ -103,7 +106,7 @@ void EventLoop::loop()
     }
     currentActiveChannel_ = NULL;
     eventHandling_ = false;
-    // doPendingFunctors();
+    doPendingFunctors();
   }
 
   LOG_TRACE << "EventLoop " << this << " stop looping";
@@ -120,6 +123,52 @@ void EventLoop::quit()
   {
     wakeup();
   }
+}
+
+void EventLoop::runInLoop(Functor cb)
+{
+  if (isInLoopThread())
+  {
+    cb();
+  }
+  else
+  {
+    queueInLoop(std::move(cb));
+  }
+}
+
+void EventLoop::queueInLoop(Functor cb)
+{
+  {
+    MutexLockGuard lock(mutex_);
+    pendingFunctors_.push_back(std::move(cb));
+  }
+
+  // if it's called from other threads,
+  // or it's doing pending functors,
+  // it's have to wakeup
+  // because the doPendingFunctors() is at the end of loop.
+  if (!isInLoopThread() || callingPendingFunctors_)
+  {
+    wakeup();
+  }
+}
+
+TimerId EventLoop::runAt(Timestamp time, TimerCallback cb)
+{
+  return timerQueue_->addTimer(std::move(cb), time, 0.0);
+}
+
+TimerId EventLoop::runAfter(double delay, TimerCallback cb)
+{
+  Timestamp time(addTime(Timestamp::now(), delay));
+  return runAt(time, std::move(cb));
+}
+
+TimerId EventLoop::runEvery(double interval, TimerCallback cb)
+{
+  Timestamp time(addTime(Timestamp::now(), interval));
+  return timerQueue_->addTimer(std::move(cb), time, interval);
 }
 
 void EventLoop::updateChannel(Channel* channel)
@@ -157,24 +206,47 @@ void EventLoop::abortNotInLoopThread()
 
 void EventLoop::wakeup()
 {
-  /*
   uint64_t one = 1;
   ssize_t n = sockets::write(wakeupFd_, &one, sizeof one);
   if (n != sizeof one)
   {
     LOG_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
   }
-  */
 }
 
 void EventLoop::handleRead()
 {
-  /*
   uint64_t one = 1;
   ssize_t n = sockets::read(wakeupFd_, &one, sizeof one);
   if (n != sizeof one)
   {
     LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
   }
-  */
+}
+
+void EventLoop::doPendingFunctors()
+{
+  std::vector<Functor> functors;
+  callingPendingFunctors_ = true;
+
+  // use swap to
+  // shorten critical section and prevent deadlock
+  {
+    MutexLockGuard lock(mutex_);
+    functors.swap(pendingFunctors_);
+  }
+
+  for (const Functor& functor : functors)
+  {
+    functor();
+  }
+  callingPendingFunctors_ = false;
+}
+
+void EventLoop::printActiveChannels() const
+{
+  for (const Channel* channel : activeChannels_)
+  {
+    LOG_TRACE << "{" << channel->reventsToString() << "} ";
+  }
 }

@@ -4,6 +4,9 @@ set(net_SRCS
   Poller.cpp
   poller/DefaultPoller.cpp
   poller/PollPoller.cpp
+  Timer.cpp
+  TimerQueue.cpp
+  SocketsOps.cpp
   )
 
 add_library(skyline_net ${net_SRCS})
