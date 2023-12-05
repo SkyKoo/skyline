@@ -1,6 +1,9 @@
 add_executable(eventloop_unittest EventLoop_unittest.cpp)
 target_link_libraries(eventloop_unittest skyline_net)
 
+add_executable(eventloopthread_unittest EventLoopThread_unittest.cpp)
+target_link_libraries(eventloopthread_unittest skyline_net)
+
 add_executable(timerqueue_unittest TimerQueue_unittest.cpp)
 target_link_libraries(timerqueue_unittest skyline_net)
 add_test(NAME timerqueue_unittest COMMAND timerqueue_unittest)

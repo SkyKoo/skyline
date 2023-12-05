@@ -7,6 +7,7 @@ set(net_SRCS
   Timer.cpp
   TimerQueue.cpp
   SocketsOps.cpp
+  EventLoopThread.cpp
   )
 
 add_library(skyline_net ${net_SRCS})
