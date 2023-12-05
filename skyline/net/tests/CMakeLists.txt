@@ -4,6 +4,15 @@ target_link_libraries(eventloop_unittest skyline_net)
 add_executable(eventloopthread_unittest EventLoopThread_unittest.cpp)
 target_link_libraries(eventloopthread_unittest skyline_net)
 
+add_executable(acceptor_unittest Acceptor_unittest.cpp)
+target_link_libraries(acceptor_unittest skyline_net)
+
 add_executable(timerqueue_unittest TimerQueue_unittest.cpp)
 target_link_libraries(timerqueue_unittest skyline_net)
 add_test(NAME timerqueue_unittest COMMAND timerqueue_unittest)
+
+if(BOOSTTEST_LIBRARY)
+  add_executable(inetaddress_unittest InetAddress_unittest.cpp)
+  target_link_libraries(inetaddress_unittest skyline_net boost_unit_test_framework)
+  add_test(NAME inetaddress_unittest COMMAND inetaddress_unittest)
+endif()

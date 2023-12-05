@@ -24,7 +24,6 @@ int main()
 {
   print();
 
-  /*
   {
     EventLoopThread thr1; // never start
   }
@@ -36,7 +35,6 @@ int main()
     loop->runInLoop(std::bind(print, loop));
     CurrentThread::sleepUsec(500 * 1000);
   }
-  */
 
   {
     // quit() before dtor
