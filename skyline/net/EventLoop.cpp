@@ -125,6 +125,9 @@ void EventLoop::quit()
   }
 }
 
+// this func is important, safe thread
+// if same loop thread calling, exec immediately
+// if other thread calling, put it in loop queue
 void EventLoop::runInLoop(Functor cb)
 {
   if (isInLoopThread())
@@ -169,6 +172,11 @@ TimerId EventLoop::runEvery(double interval, TimerCallback cb)
 {
   Timestamp time(addTime(Timestamp::now(), interval));
   return timerQueue_->addTimer(std::move(cb), time, interval);
+}
+
+void EventLoop::cancel(TimerId timerId)
+{
+  return timerQueue_->cancel(timerId);
 }
 
 void EventLoop::updateChannel(Channel* channel)
