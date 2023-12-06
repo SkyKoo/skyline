@@ -32,6 +32,11 @@ int main()
   acceptor.setNewConnectionCallback(newConnection);
   acceptor.listen();
 
+  InetAddress listenAddr2(9980);
+  Acceptor acceptor2(&loop, listenAddr2, true);
+  acceptor2.setNewConnectionCallback(newConnection);
+  acceptor2.listen();
+
   loop.loop();
 }
 
