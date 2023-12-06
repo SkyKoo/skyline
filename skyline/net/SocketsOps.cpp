@@ -4,6 +4,7 @@
 #include "skyline/base/Logging.h"
 #include "skyline/net/Endian.h"
 
+#include <fstream>
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
@@ -227,3 +228,63 @@ void sockets::fromIpPort(const char* ip, uint16_t port, struct sockaddr_in6* add
   }
 }
 
+int sockets::getSocketError(int sockfd)
+{
+  int optval;
+  socklen_t optlen = static_cast<socklen_t>(sizeof optval);
+
+  if (::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
+  {
+    return errno;
+  }
+  else
+  {
+    return optval;
+  }
+}
+
+struct sockaddr_in6 sockets::getLocalAddr(int sockfd)
+{
+  struct sockaddr_in6 localaddr;
+  memZero(&localaddr, sizeof localaddr);
+  socklen_t addrlen = static_cast<socklen_t>(sizeof localaddr);
+  if (::getsockname(sockfd, sockaddr_cast(&localaddr), &addrlen) < 0)
+  {
+    LOG_SYSERR << "sockets::getLocalAddr";
+  }
+  return localaddr;
+}
+
+struct sockaddr_in6 sockets::getPeerAddr(int sockfd)
+{
+  struct sockaddr_in6 peeraddr;
+  memZero(&peeraddr, sizeof peeraddr);
+  socklen_t addrlen = static_cast<socklen_t>(sizeof peeraddr);
+  if (::getpeername(sockfd, sockaddr_cast(&peeraddr), &addrlen) < 0)
+  {
+    LOG_SYSERR << "sockets::getPeerAddr";
+  }
+  return peeraddr;
+}
+
+bool sockets::isSelfConnect(int sockfd)
+{
+  struct sockaddr_in6 localaddr = getLocalAddr(sockfd);
+  struct sockaddr_in6 peeraddr = getPeerAddr(sockfd);
+  if (localaddr.sin6_family == AF_INET)
+  {
+    const struct sockaddr_in* laddr4 = reinterpret_cast<struct sockaddr_in*>(&localaddr);
+    const struct sockaddr_in* raddr4 = reinterpret_cast<struct sockaddr_in*>(&peeraddr);
+    return laddr4->sin_port == raddr4->sin_port
+      && laddr4->sin_addr.s_addr == raddr4->sin_addr.s_addr;
+  }
+  else if (localaddr.sin6_family == AF_INET6)
+  {
+    return localaddr.sin6_port == peeraddr.sin6_port
+      && memcmp(&localaddr.sin6_addr, &peeraddr.sin6_addr, sizeof localaddr.sin6_addr) == 0;
+  }
+  else
+  {
+    return false;
+  }
+}

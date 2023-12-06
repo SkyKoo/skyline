@@ -136,7 +136,7 @@ const char* strerror_tl(int savedErrno);
 // initializer lists.
 
 #define CHECK_NOTNULL(val) \
-  ::skyline::CheckNotNULL(__FILE__, __LINE__, "'" #val "' Must be non NULL", (val))
+  ::skyline::CheckNotNull(__FILE__, __LINE__, "'" #val "' Must be non NULL", (val))
 
 // A small helper for Check_NOTNULL().
 template <typename T>

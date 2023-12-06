@@ -12,6 +12,7 @@ set(net_SRCS
   Socket.cpp
   InetAddress.cpp
   Acceptor.cpp
+  TcpConnection.cpp
   )
 
 add_library(skyline_net ${net_SRCS})

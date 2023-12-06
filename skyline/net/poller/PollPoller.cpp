@@ -120,6 +120,7 @@ void PollPoller::removeChannel(Channel* channel)
   }
   else
   {
+    // use swap with last fd to impletement O(1) func remove fd
     int channelAtEnd = pollfds_.back().fd;
     iter_swap(pollfds_.begin()+idx, pollfds_.end()-1);
     if (channelAtEnd < 0)
