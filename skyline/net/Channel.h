@@ -31,6 +31,8 @@ class Channel : noncopyable
   Channel(EventLoop* loop, int fd);
   ~Channel();
 
+  // This Timestamp is pool return time, it should earlier than the msg be read
+  // So we need to record this time for calculate whole duration
   void handleEvent(Timestamp receiveTime);
   void setReadCallback(ReadEventCallback cb)
   { readCallback_ = std::move(cb); }

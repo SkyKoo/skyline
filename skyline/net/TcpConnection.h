@@ -43,11 +43,31 @@ class TcpConnection : noncopyable,
   bool connected() const { return state_ == kConnected; }
   bool disconnected() const { return state_ == kDisconnected; }
 
+  // void send(string&& message); // C++11
+  void send(const void* message, int len);
+  void send(const StringPiece& message);
+  // void send(Buffer&& messgae); // C++11
+  void send(Buffer* message); // this one will swap data
+  void shutdown();
+
   void setConnectionCallback(const ConnectionCallback& cb)
   { connectionCallback_ = cb; }
 
   void setMessageCallback(const MessageCallback& cb)
   { messageCallback_ = cb; }
+
+  void setWriteCompleteCallback(const WriteCompleteCallback& cb)
+  { writeCompleteCallback_ = cb; }
+
+  void setHighWaterMarkCallback(const HighWaterMarkCallback& cb)
+  { highWaterMarkCallback_ = cb; }
+
+  /// Advanced interface
+  Buffer* inputBuffer()
+  { return &inputBuffer_; }
+
+  Buffer* outputBuffer()
+  { return &outputBuffer_; }
 
   /// Internal use only.
   void setCloseCallback(const CloseCallback& cb)
@@ -68,6 +88,11 @@ class TcpConnection : noncopyable,
   void handleClose();
   void handleError();
 
+  // void sendInLoop(string&& message);
+  void sendInLoop(const StringPiece& message);
+  void sendInLoop(const void* message, size_t len);
+  void shutdownInLoop();
+
   void setState(StateE s) { state_ = s; }
   const char* stateToString() const;
 
@@ -82,8 +107,8 @@ class TcpConnection : noncopyable,
   const InetAddress peerAddr_;
   ConnectionCallback connectionCallback_;
   MessageCallback messageCallback_;
-  // WriteCompleteCallback writeCompleteCallback_;
-  // HighWaterMarkCallback highWaterMarkCallback_;
+  WriteCompleteCallback writeCompleteCallback_;
+  HighWaterMarkCallback highWaterMarkCallback_;
   CloseCallback closeCallback_;
   size_t highWaterMark_;
   Buffer inputBuffer_;
