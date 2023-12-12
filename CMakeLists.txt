@@ -58,9 +58,12 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG") # NDEBUG customer
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
+#find_library(Boost REQUIRED)
 # find libboost_unit_test_framework.so and save to BOOSTTEST_LIBRARY
 find_library(BOOSTTEST_LIBRARY NAMES boost_unit_test_framework)
 message("boost test library: " ${BOOSTTEST_LIBRARY})
+#find_library(BOOSTPO_LIBRARY NAMES boost_program_options)
+#find_library(BOOSTSYSTEM_LIBRARY NAMES boost_system)
 
 # message("boost include dirs: " ${Boost_INCLUDE_DIRS})
 # include_directories(${Boost_INCLUDE_DIRS})

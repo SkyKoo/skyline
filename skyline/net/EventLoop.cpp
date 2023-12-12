@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <poll.h>
 #include <sys/eventfd.h>
+#include <signal.h>
 
 using namespace skyline;
 using namespace skyline::net;
@@ -32,6 +33,21 @@ int createEventfd()
   return evtfd;
 }
 
+// If server send to a connection which has closed already,
+// server will got a SIGPIPE signal and exit the program
+// so server need to ignore the signal at the beginning. p321
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+class IgnoreSigPipe
+{
+ public:
+  IgnoreSigPipe()
+  {
+    ::signal(SIGPIPE, SIG_IGN);
+  }
+};
+#pragma GCC diagnostic error "-Wold-style-cast"
+
+IgnoreSigPipe initObj;
 } // namespace
 
 EventLoop* EventLoop::getEventLoopOfCurrentThread()

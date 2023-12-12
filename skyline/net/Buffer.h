@@ -57,7 +57,7 @@ class Buffer : copyable
   size_t readableBytes() const
   { return writerIndex_ - readerIndex_; }
 
-  // the bytes has written
+  // the bytes could be written
   size_t writableBytes() const
   { return buffer_.size() - writerIndex_; }
 
@@ -105,6 +105,7 @@ class Buffer : copyable
   void retrieve(size_t len)
   {
     assert(len <= readableBytes());
+    // Attention! if len == readableBytes, then no data to read, goto retrieveAll
     if (len < readableBytes())
     {
       readerIndex_ += len;

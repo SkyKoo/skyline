@@ -107,6 +107,17 @@ class EventLoop : noncopyable
   }
   bool isInLoopThread() const { return threadId_ == CurrentThread::tid(); }
 
+  bool eventHandling() const { return eventHandling_; }
+
+  void setContext(const boost::any& context)
+  { context_ = context; }
+
+  const boost::any& getContext() const
+  { return context_; }
+
+  boost::any* getMutableContext()
+  { return &context_; }
+
   static EventLoop* getEventLoopOfCurrentThread();
 
  private:

@@ -18,7 +18,7 @@ namespace net
 
 class EventLoop;
 class Acceptor;
-// class EventLoopThreadPool;
+class EventLoopThreadPool;
 
 ///
 /// TCP server, supports single-threaded and thread-pool models.
@@ -45,6 +45,23 @@ class TcpServer : noncopyable
   const string& name() const { return name_; }
   EventLoop* getLoop() const { return loop_; }
 
+  /// Set the number of threads for handling input.
+  ///
+  /// Always accepts new connection in loop's thread.
+  /// Must be called before @c start
+  /// @param numThreads
+  /// - 0 means all I/O in loop's thread, no thread will created.
+  ///   this is the default value.
+  /// - 1 means all I/O in another thread.
+  /// - N means a thread pool with N threads, new connections
+  ///   are assigned on a round-robin basis.
+  void setThreadNum(int numThreads);
+  void setThreadInitCallback(const ThreadInitCallback& cb)
+  { threadInitCallback_ = cb; }
+  /// valid after calling start()
+  std::shared_ptr<EventLoopThreadPool> threadPool()
+  { return threadPool_; }
+
   /// Starts the server if it's not listening.
   ///
   /// It's harmless to call it multiple times.
@@ -63,8 +80,8 @@ class TcpServer : noncopyable
 
   /// Set write complete callback;
   /// Not thread safe.
-  // void setWriteCompleteCallback(const WriteCompleteCallback& cb)
-  // { writeCompleteCallback_ = cb; }
+  void setWriteCompleteCallback(const WriteCompleteCallback& cb)
+  { writeCompleteCallback_ = cb; }
 
  private:
   /// Not thread safe, but in loop
@@ -82,11 +99,11 @@ class TcpServer : noncopyable
   const string ipPort_;
   const string name_;
   std::unique_ptr<Acceptor> acceptor_;
-  // std::shared_ptr<EventLoopThreadPool> threadPool_;
+  std::shared_ptr<EventLoopThreadPool> threadPool_;
   ConnectionCallback connectionCallback_;
   MessageCallback messageCallback_;
-  // WriteCompleteCallback writeCompleteCallback_;
-  // ThreadInitCallback threadInitCallback_;
+  WriteCompleteCallback writeCompleteCallback_;
+  ThreadInitCallback threadInitCallback_;
   AtomicInt32 started_;
   // always in loop thread
   int nextConnId_;

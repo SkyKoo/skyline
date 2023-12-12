@@ -2,6 +2,7 @@
 #include "skyline/net/TcpConnection.h"
 
 #include "skyline/base/Logging.h"
+#include "skyline/base/WeakCallback.h"
 #include "skyline/net/EventLoop.h"
 #include "skyline/net/Socket.h"
 #include "skyline/net/Channel.h"
@@ -10,6 +11,20 @@
 using namespace skyline;
 using namespace skyline::net;
 
+void skyline::net::defaultConnectionCallback(const TcpConnectionPtr& conn)
+{
+  LOG_TRACE << conn->localAddress().toIpPort() << " -> "
+            << conn->peerAddress().toIpPort() << " is "
+            << (conn->connected() ? "UP" : "DOWN");
+  // do not cal conn->forceClose, because some users want to register message callback only.
+}
+
+void skyline::net::defaultMessageCallback(const TcpConnectionPtr&,
+                                          Buffer* buf,
+                                          Timestamp)
+{
+  buf->retrieveAll();
+}
 
 TcpConnection::TcpConnection(EventLoop* loop,
                              const string& nameArg,
@@ -19,7 +34,7 @@ TcpConnection::TcpConnection(EventLoop* loop,
   : loop_(CHECK_NOTNULL(loop)),
     name_(nameArg),
     state_(kConnecting),
-    // reading_(true),
+    reading_(true), // init true
     socket_(new Socket(sockfd)),
     channel_(new Channel(loop, sockfd)),
     localAddr_(localAddr),
@@ -38,13 +53,18 @@ TcpConnection::~TcpConnection()
   assert(state_ == kDisconnected);
 }
 
-//void TcpConnection::getTcpInfo(struct tcp_info* tcpi) const
-//{
-//}
+bool TcpConnection::getTcpInfo(struct tcp_info* tcpi) const
+{
+  return socket_->getTcpInfo(tcpi);
+}
 
-//string TcpConnection::getTcpInfoString() const
-//{
-//}
+string TcpConnection::getTcpInfoString() const
+{
+  char buf[1024];
+  buf[0] = '\0';
+  socket_->getTcpInfoString(buf, sizeof buf);
+  return buf;
+}
 
 void TcpConnection::send(const void* data, int len)
 {
@@ -168,51 +188,88 @@ void TcpConnection::shutdownInLoop()
   }
 }
 
-void TcpConnection::handleRead(Timestamp receiveTime)
+void TcpConnection::forceClose()
+{
+  // FIXME: use compare and swap
+  if (state_ == kConnected || state_ == kDisconnecting)
+  {
+    setState(kDisconnecting);
+    loop_->queueInLoop(std::bind(&TcpConnection::forceCloseInLoop, shared_from_this()));
+  }
+}
+
+void TcpConnection::forceCloseWithDelay(double seconds)
+{
+  if (state_ == kConnected || state_ == kDisconnecting)
+  {
+    setState(kDisconnecting);
+    // weak callback, if this object is deleted before the seconds, do nothing
+    // and because this is a weak callback, this memory of this object can be release
+    loop_->runAfter(seconds, makeWeakCallback(shared_from_this(), &TcpConnection::forceClose));
+    // not forceCloseInLoop to avoid race condition
+  }
+}
+
+void TcpConnection::forceCloseInLoop()
 {
   loop_->assertInLoopThread();
-  int savedErrno = 0;
-  ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
-  if (n > 0)
+  if (state_ == kConnected || state_ == kDisconnecting)
   {
-    messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
-  }
-  else if (n == 0)
-  {
+    // as if we received 0 byte in handleRead();
     handleClose();
   }
-  else
+}
+
+const char* TcpConnection::stateToString() const
+{
+  switch (state_)
   {
-    errno = savedErrno;
-    LOG_SYSERR << "TcpConnection::handleRead";
-    handleError();
+    case kDisconnected:
+      return "kDisconnected";
+    case kConnecting:
+      return "kConnecting";
+    case kConnected:
+      return "kConnected";
+    case kDisconnecting:
+      return "kDisconnecting";
+    default:
+      return "unknown state";
   }
 }
 
-void TcpConnection::handleWrite()
+void TcpConnection::setTcpNoDelay(bool on)
 {
+  socket_->setTcpNoDelay(on);
 }
 
-void TcpConnection::handleClose()
+void TcpConnection::startRead()
+{
+  loop_->runInLoop(std::bind(&TcpConnection::startReadInLoop, this));
+}
+
+void TcpConnection::startReadInLoop()
 {
   loop_->assertInLoopThread();
-  LOG_TRACE << "fd = " << channel_->fd() << " state = " << stateToString();
-  assert(state_ == kConnected || state_ == kDisconnecting);
-  // we don't close fd, leave it to dtor, so we can find leaks easily.
-  setState(kDisconnected);
-  channel_->disableAll();
-
-  TcpConnectionPtr guardThis(shared_from_this());
-  connectionCallback_(guardThis);
-  // must be the last line
-  closeCallback_(guardThis);
+  if (!reading_ || !channel_->isReading())
+  {
+    channel_->enableReading();
+    reading_ = true;
+  }
 }
 
-void TcpConnection::handleError()
+void TcpConnection::stopRead()
 {
-  int err = sockets::getSocketError(channel_->fd());
-  LOG_ERROR << "TcpConnection::handleError [" << name_
-            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
+  loop_->runInLoop(std::bind(&TcpConnection::stopReadInLoop, this));
+}
+
+void TcpConnection::stopReadInLoop()
+{
+  loop_->assertInLoopThread();
+  if (reading_ || channel_->isReading())
+  {
+    channel_->disableReading();
+    reading_ = false;
+  }
 }
 
 void TcpConnection::connectEstablished()
@@ -239,19 +296,83 @@ void TcpConnection::connectDestroyed()
   channel_->remove();
 }
 
-const char* TcpConnection::stateToString() const
+void TcpConnection::handleRead(Timestamp receiveTime)
 {
-  switch (state_)
+  loop_->assertInLoopThread();
+  int savedErrno = 0;
+  ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
+  if (n > 0)
   {
-    case kDisconnected:
-      return "kDisconnected";
-    case kConnecting:
-      return "kConnecting";
-    case kConnected:
-      return "kConnected";
-    case kDisconnecting:
-      return "kDisconnecting";
-    default:
-      return "unknown state";
+    messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
   }
+  else if (n == 0)
+  {
+    handleClose();
+  }
+  else
+  {
+    errno = savedErrno;
+    LOG_SYSERR << "TcpConnection::handleRead";
+    handleError();
+  }
+}
+
+void TcpConnection::handleWrite()
+{
+  loop_->assertInLoopThread();
+  if (channel_->isWriting())
+  {
+    ssize_t n = sockets::write(channel_->fd(),
+                               outputBuffer_.peek(),
+                               outputBuffer_.readableBytes());
+    if (n > 0)
+    {
+      outputBuffer_.retrieve(n);
+      if (outputBuffer_.readableBytes() == 0)
+      {
+        // after send all bytes, disable watching channel writing
+        // to prevent busy loop
+        channel_->disableWriting();
+        if (writeCompleteCallback_)
+        {
+          loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
+        }
+        if (state_ == kDisconnecting)
+        {
+          shutdownInLoop();
+        }
+      }
+    }
+    else
+    {
+      LOG_SYSERR << "TcpConnection::handleWrite";
+    }
+  }
+  else
+  {
+    LOG_TRACE << "Connection fd = " << channel_->fd()
+              << " is down, no more writing";
+  }
+}
+
+void TcpConnection::handleClose()
+{
+  loop_->assertInLoopThread();
+  LOG_TRACE << "fd = " << channel_->fd() << " state = " << stateToString();
+  assert(state_ == kConnected || state_ == kDisconnecting);
+  // we don't close fd, leave it to dtor, so we can find leaks easily.
+  setState(kDisconnected);
+  channel_->disableAll();
+
+  TcpConnectionPtr guardThis(shared_from_this());
+  connectionCallback_(guardThis);
+  // must be the last line
+  closeCallback_(guardThis);
+}
+
+void TcpConnection::handleError()
+{
+  int err = sockets::getSocketError(channel_->fd());
+  LOG_ERROR << "TcpConnection::handleError [" << name_
+            << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }

@@ -7,7 +7,12 @@
 #include "skyline/net/Callbacks.h"
 #include "skyline/net/Buffer.h"
 
+#include <boost/any.hpp>
+
 #include <memory>
+
+// struct tcp_info is in <netinet/tcp.h>
+struct tcp_info;
 
 namespace skyline
 {
@@ -43,12 +48,34 @@ class TcpConnection : noncopyable,
   bool connected() const { return state_ == kConnected; }
   bool disconnected() const { return state_ == kDisconnected; }
 
+  // return true if success.
+  bool getTcpInfo(struct tcp_info*) const;
+  string getTcpInfoString() const;
+
   // void send(string&& message); // C++11
   void send(const void* message, int len);
   void send(const StringPiece& message);
   // void send(Buffer&& messgae); // C++11
   void send(Buffer* message); // this one will swap data
   void shutdown();
+
+  void forceClose();
+  void forceCloseWithDelay(double seconds);
+  void setTcpNoDelay(bool on);
+
+  // reading or not
+  void startRead();
+  void stopRead();
+  bool isReading() const { return reading_; } // NOT thread safe, may race with start/stopReadInLoop
+
+  void setContext(const boost::any& context)
+  { context_ = context; }
+
+  const boost::any& getContext() const
+  { return context_; }
+
+  boost::any* getMutableContext()
+  { return &context_; }
 
   void setConnectionCallback(const ConnectionCallback& cb)
   { connectionCallback_ = cb; }
@@ -92,14 +119,18 @@ class TcpConnection : noncopyable,
   void sendInLoop(const StringPiece& message);
   void sendInLoop(const void* message, size_t len);
   void shutdownInLoop();
+  void forceCloseInLoop();
 
   void setState(StateE s) { state_ = s; }
   const char* stateToString() const;
 
+  void startReadInLoop();
+  void stopReadInLoop();
+
   EventLoop* loop_;
   const string name_;
   StateE state_; // FIXME: use atomic variable
-  // bool reading_;
+  bool reading_;
   // we don't expose those classes to client.
   std::unique_ptr<Socket> socket_;
   std::unique_ptr<Channel> channel_;
@@ -113,7 +144,7 @@ class TcpConnection : noncopyable,
   size_t highWaterMark_;
   Buffer inputBuffer_;
   Buffer outputBuffer_; // FIXME: use list<Buffer> as output buffer.
-  // boost::any context_;
+  boost::any context_;
   // FIXME: creationTime_, lastReceiveTime_
   //        bytesReceived_, bytesSent_
 };

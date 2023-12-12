@@ -147,7 +147,7 @@ void TimerQueue::cancelInLoop(TimerId timerId)
     delete it->first; // FIXME: no delete please
     activeTimers_.erase(it);
   }
-  else if (callingExpiredTimers_)
+  else if (callingExpiredTimers_) // to prevent self unregrist self. p.331
   {
     cancelingTimers_.insert(timer);
   }

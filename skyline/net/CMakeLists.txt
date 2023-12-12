@@ -14,6 +14,10 @@ set(net_SRCS
   Acceptor.cpp
   TcpConnection.cpp
   Buffer.cpp
+  EventLoopThreadPool.cpp
+  TcpServer.cpp
+  Connector.cpp
+  TcpClient.cpp
   )
 
 add_library(skyline_net ${net_SRCS})
