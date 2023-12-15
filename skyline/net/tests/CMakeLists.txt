@@ -1,3 +1,5 @@
+add_executable(channel_test Channel_test.cpp)
+target_link_libraries(channel_test skyline_net)
 
 add_executable(echoserver_unittest EchoServer_unittest.cpp)
 target_link_libraries(echoserver_unittest skyline_net)
@@ -27,3 +29,5 @@ if(BOOSTTEST_LIBRARY)
   target_link_libraries(inetaddress_unittest skyline_net boost_unit_test_framework)
   add_test(NAME inetaddress_unittest COMMAND inetaddress_unittest)
 endif()
+
+

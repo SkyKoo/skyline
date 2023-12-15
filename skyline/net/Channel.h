@@ -44,7 +44,7 @@ class Channel : noncopyable
   { errorCallback_ = std::move(cb); }
 
   /// Tie this channel to the owner object managed by shared_ptr,
-  /// prevent the owner object being destroyed in handleEvent.
+  /// prevent the owner object being destroyed in handleEvent. p274
   void tie(const std::shared_ptr<void>&);
 
   int fd() const { return fd_; }
