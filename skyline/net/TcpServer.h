@@ -6,6 +6,7 @@
 #include "skyline/base/Atomic.h"
 #include "skyline/net/InetAddress.h"
 #include "skyline/net/Callbacks.h"
+#include "skyline/net/TcpConnection.h"
 
 #include <functional>
 #include <memory>

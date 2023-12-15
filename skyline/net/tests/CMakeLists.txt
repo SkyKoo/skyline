@@ -1,3 +1,10 @@
+
+add_executable(echoserver_unittest EchoServer_unittest.cpp)
+target_link_libraries(echoserver_unittest skyline_net)
+
+add_executable(echoclient_unittest EchoClient_unittest.cpp)
+target_link_libraries(echoclient_unittest skyline_net)
+
 add_executable(eventloop_unittest EventLoop_unittest.cpp)
 target_link_libraries(eventloop_unittest skyline_net)
 

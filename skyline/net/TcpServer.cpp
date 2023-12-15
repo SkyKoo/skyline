@@ -22,7 +22,7 @@ TcpServer::TcpServer(EventLoop* loop,
     ipPort_(listenAddr.toIpPort()),
     name_(nameArg),
     acceptor_(new Acceptor(loop, listenAddr, option == kReusePort)),
-    // threadPool_(new EventLoopThreadPool(loop_, name_)),
+    threadPool_(new EventLoopThreadPool(loop_, name_)),
     connectionCallback_(defaultConnectionCallback),
     messageCallback_(defaultMessageCallback),
     nextConnId_(1)
@@ -55,7 +55,7 @@ void TcpServer::start()
 {
   if (started_.getAndSet(1) == 0)
   {
-    // threadPool_->start(threadInitCallback_);
+    threadPool_->start(threadInitCallback_);
 
     assert(!acceptor_->listening());
     loop_->runInLoop(

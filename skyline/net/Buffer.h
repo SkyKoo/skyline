@@ -53,7 +53,7 @@ class Buffer : copyable
     std::swap(writerIndex_, rhs.writerIndex_);
   }
 
-  // the bytes has read
+  // the bytes could be read
   size_t readableBytes() const
   { return writerIndex_ - readerIndex_; }
 
@@ -249,6 +249,31 @@ class Buffer : copyable
   {
     int64_t result = peekInt64();
     retrieveInt64();
+    return result;
+  }
+
+  ///
+  /// Read int32_t from network endian
+  ///
+  /// Require: buf->readableBytes() >= sizeof(int32_t)
+  int32_t readInt32()
+  {
+    int32_t result = peekInt32();
+    retrieveInt32();
+    return result;
+  }
+
+  int16_t readInt16()
+  {
+    int16_t result = peekInt16();
+    retrieveInt16();
+    return result;
+  }
+
+  int8_t readInt8()
+  {
+    int8_t result = peekInt8();
+    retrieveInt8();
     return result;
   }
 

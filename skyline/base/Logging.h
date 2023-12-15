@@ -121,7 +121,7 @@ inline Logger::LogLevel Logger::logLevel()
 #define LOG_DEBUG if (skyline::Logger::logLevel() <= skyline::Logger::DEBUG) \
   skyline::Logger(__FILE__, __LINE__, skyline::Logger::DEBUG, __func__).stream()
 #define LOG_INFO if (skyline::Logger::logLevel() <= skyline::Logger::INFO) \
-  skyline::Logger(__FILE__, __LINE__, skyline::Logger::INFO, __func__).stream()
+  skyline::Logger(__FILE__, __LINE__).stream()
 #define LOG_WARN skyline::Logger(__FILE__, __LINE__, skyline::Logger::WARN, __func__).stream()
 #define LOG_ERROR skyline::Logger(__FILE__, __LINE__, skyline::Logger::ERROR, __func__).stream()
 #define LOG_FATAL skyline::Logger(__FILE__, __LINE__, skyline::Logger::FATAL, __func__).stream()
