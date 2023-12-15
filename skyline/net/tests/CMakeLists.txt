@@ -30,4 +30,5 @@ if(BOOSTTEST_LIBRARY)
   add_test(NAME inetaddress_unittest COMMAND inetaddress_unittest)
 endif()
 
-
+add_executable(tcpclient_reg1 TcpClient_reg1.cpp)
+target_link_libraries(tcpclient_reg1 skyline_net)
