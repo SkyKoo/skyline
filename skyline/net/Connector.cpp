@@ -52,7 +52,7 @@ void Connector::startInLoop()
 void Connector::stop()
 {
   connect_ = false;
-  loop_->runInLoop(std::bind(&Connector::stopInLoop, this)); // FIXME: unsafe
+  loop_->queueInLoop(std::bind(&Connector::stopInLoop, this)); // FIXME: unsafe
   // FIXME: cancel timer
 }
 
@@ -101,7 +101,7 @@ void Connector::connect()
       break;
 
     default:
-      LOG_SYSERR << "unexpected error in Connector::startInLoop " << savedErrno;
+      LOG_SYSERR << "Unexpected error in Connector::startInLoop " << savedErrno;
       sockets::close(sockfd);
       break;
   }
