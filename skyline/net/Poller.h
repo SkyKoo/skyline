@@ -43,7 +43,7 @@ class Poller : noncopyable
 
   static Poller* newDefaultPoller(EventLoop* loop);
 
-  void asserInLoopThread() const
+  void assertInLoopThread() const
   {
     ownerLoop_->assertInLoopThread();
   }

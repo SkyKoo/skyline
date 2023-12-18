@@ -37,7 +37,7 @@ Timestamp PollPoller::poll(int timeoutMs, ChannelList* activeChannels)
     if (savedErrno != EINTR)
     {
       errno = savedErrno;
-      LOG_SYSFATAL << "PollPoller::poll()";
+      LOG_SYSERR << "PollPoller::poll()";
     }
   }
   return now;
@@ -65,7 +65,7 @@ void PollPoller::fillActiveChannels(int numEvents, ChannelList* activeChannels) 
 // called from eventloop
 void PollPoller::updateChannel(Channel* channel)
 {
-  Poller::asserInLoopThread();
+  Poller::assertInLoopThread();
   LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events();
   if (channel->index() < 0)
   {
@@ -84,7 +84,7 @@ void PollPoller::updateChannel(Channel* channel)
   {
     // update existing one
     assert(channels_.find(channel->fd()) != channels_.end());
-    assert(channels_[channel->fd()] = channel);
+    assert(channels_[channel->fd()] == channel);
     int idx = channel->index();
     assert(0 <= idx && idx < static_cast<int>(pollfds_.size()));
     struct pollfd& pfd = pollfds_[idx];
@@ -103,7 +103,7 @@ void PollPoller::updateChannel(Channel* channel)
 
 void PollPoller::removeChannel(Channel* channel)
 {
-  Poller::asserInLoopThread();
+  Poller::assertInLoopThread();
   LOG_TRACE << "fd = " << channel->fd();
   assert(channels_.find(channel->fd()) != channels_.end());
   assert(channels_[channel->fd()] == channel);

@@ -43,6 +43,15 @@ TcpConnection::TcpConnection(EventLoop* loop,
 {
   channel_->setReadCallback(
       std::bind(&TcpConnection::handleRead, this, _1));
+  channel_->setWriteCallback(
+      std::bind(&TcpConnection::handleWrite, this));
+  channel_->setCloseCallback(
+      std::bind(&TcpConnection::handleClose, this));
+  channel_->setErrorCallback(
+      std::bind(&TcpConnection::handleError, this));
+  LOG_DEBUG << "TcpConnection::ctor[" << name_ << "] at " << this
+            << " fd=" << sockfd;
+  socket_->setKeepAlive(true);
 }
 
 TcpConnection::~TcpConnection()
@@ -153,7 +162,7 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
   if (!faultError && remaining > 0)
   {
     size_t oldLen = outputBuffer_.readableBytes();
-    if (oldLen + remaining > highWaterMark_
+    if (oldLen + remaining >= highWaterMark_
         && oldLen < highWaterMark_
         && highWaterMarkCallback_)
     {

@@ -245,13 +245,13 @@ bool TimerQueue::insert(Timer* timer)
     earliestChanged = true;
   }
   {
-    std::pair<TimerList::iterator, bool> result =
-      timers_.insert(Entry(when, timer));
+    std::pair<TimerList::iterator, bool> result
+      = timers_.insert(Entry(when, timer));
     assert(result.second); (void)result;
   }
   {
-    std::pair<ActiveTimerSet::iterator, bool> result =
-      activeTimers_.insert(ActiveTimer(timer, timer->sequence()));
+    std::pair<ActiveTimerSet::iterator, bool> result
+      = activeTimers_.insert(ActiveTimer(timer, timer->sequence()));
     assert(result.second); (void)result;
   }
 

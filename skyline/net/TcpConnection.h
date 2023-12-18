@@ -86,8 +86,8 @@ class TcpConnection : noncopyable,
   void setWriteCompleteCallback(const WriteCompleteCallback& cb)
   { writeCompleteCallback_ = cb; }
 
-  void setHighWaterMarkCallback(const HighWaterMarkCallback& cb)
-  { highWaterMarkCallback_ = cb; }
+  void setHighWaterMarkCallback(const HighWaterMarkCallback& cb, size_t highWaterMark)
+  { highWaterMarkCallback_ = cb; highWaterMark_ = highWaterMark; }
 
   /// Advanced interface
   Buffer* inputBuffer()

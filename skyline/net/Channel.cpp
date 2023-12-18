@@ -20,7 +20,7 @@ Channel::Channel(EventLoop* loop, int fd)
     events_(0),
     revents_(0),
     index_(-1),
-    logHup_(false),
+    logHup_(true),
     tied_(false),
     eventHandling_(false),
     addedToLoop_(false)
