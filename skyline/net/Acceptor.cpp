@@ -62,7 +62,7 @@ void Acceptor::handleRead()
   }
   else
   {
-    LOG_SYSERR << "in Accept::handleRead";
+    LOG_SYSERR << "in Acceptor::handleRead";
     // Read the section named "The special problem of
     // accept()ing when you can't" in libev's doc.
     // By Marc Lehmann, author of libev.
