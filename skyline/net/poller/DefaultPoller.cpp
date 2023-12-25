@@ -9,12 +9,12 @@ using namespace skyline::net;
 
 Poller* Poller::newDefaultPoller(EventLoop* loop)
 {
-  // if (::getenv("SKYLINE_USE_POLL"))
+  if (::getenv("SKYLINE_USE_POLL"))
   {
     return new PollPoller(loop);
   }
-  //else
+  else
   {
-    // return new EPollPoller(loop);
+    return new EPollPoller(loop);
   }
 }
